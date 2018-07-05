@@ -16,7 +16,7 @@ from glob import glob
 import seaborn as sns
 import matplotlib.pyplot as plt
 from IPython.display import display
-get_ipython().magic('matplotlib inline')
+#get_ipython().magic('matplotlib inline')
 plt.style.use('fivethirtyeight')
 
 import os, sys
@@ -233,12 +233,12 @@ def stand_cutoff(motifs, motif_to_use):
 
 
 ### Data Extraction
-
+all_motifs = glob('../data/pwm/*.fm')
 cutoff_dict = {}
-cutoff_dict["bcd_FlyReg.fm"] = stand_cutoff(standard_file, all_motifs, 0)[0]
-cutoff_dict["cad_FlyReg.fm"] = stand_cutoff(standard_file, all_motifs, 1)[0]
-cutoff_dict["eve_new6.fm"] = stand_cutoff(standard_file, all_motifs, 2)[0]
-cutoff_dict["zelda_.fm"] = stand_cutoff(standard_file, all_motifs, 3)[0]
+cutoff_dict["bcd_FlyReg.fm"] = stand_cutoff(all_motifs, 0)[0]
+cutoff_dict["cad_FlyReg.fm"] = stand_cutoff(all_motifs, 1)[0]
+cutoff_dict["eve_new6.fm"] = stand_cutoff(all_motifs, 2)[0]
+cutoff_dict["zelda_.fm"] = stand_cutoff(all_motifs, 3)[0]
 
 def filter_95_percentile(TFBS_df, motif_used):
     """
