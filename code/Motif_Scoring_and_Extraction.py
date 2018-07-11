@@ -264,6 +264,7 @@ def calculate_one_dfs_TFBS(file, all_motifs):
         curr_motif = read_motif(motif)
         curr_raw = raw_sequence_ungap(curr_file)
         curr_cast = cast_sequence(curr_raw)
+        curr_motif_name = os.path.basename(motif) 
 
         len_raw = len(extract_len_id(curr_raw, curr_cast))
         raw_df = pd.DataFrame(positions(curr_raw, curr_cast, curr_motif))
@@ -272,6 +273,7 @@ def calculate_one_dfs_TFBS(file, all_motifs):
 
         align_name = re.split(r'_', file)[-1]
         final_df = merge_align_df(temp_df, curr_file, len_raw)
+        final_df['motif'] = curr_motif_name
 
     return final_df
 
