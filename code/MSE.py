@@ -465,7 +465,7 @@ def calculate_all_TFBS(files, all_motifs):
         for motif in all_motifs:
             calculate_one_TFBS(file, motif)
 
-def frequent_patterns(alignment_num, tables, percentile=80):
+def frequent_patterns(table, percentile=80):
     """
     alignment_num: integer specifying which alignment to analyze
     tables: a list of tables like group_by_combo_tables
@@ -474,11 +474,10 @@ def frequent_patterns(alignment_num, tables, percentile=80):
     Returns:
     A table, like those in group_by_combo_tables, except w/only the largest counts
     """
-    counts = list(tables[alignment_num]["Count"])
-    t = tables[alignment_num]
-    return t[t["Count"] >= np.percentile(counts, percentile)]
+    counts = list(table["Count"])
+    return table[table["Count"] >= np.percentile(counts, percentile)]
 
-def most_frequent_pattern(alignment_num, tables):
+def most_frequent_pattern(table):
     """
     alignment_num: integer specifying which alignment to analyze
     tables: a list of tables like group_by_combo_tables
@@ -486,17 +485,31 @@ def most_frequent_pattern(alignment_num, tables):
     Returns:
     A single-row table with the TFBS combo with the LARGEST count in the sequence
     """
-    max_count = max(list(tables[alignment_num]["Count"]))
-    t = tables[alignment_num]
-    return t[t["Count"] == max_count]
+    max_count = max(list(table["Count"]))
+    return table[table["Count"] == max_count]
+
+def frequent_across_alignments(align_list, motif_path, percentile):
+    """
+    align_list: a list of multiple alignment files
+    motif_path: a string - the path to pwm file you want to use.
+    percentile: cutoff for high frequency of combination
+    """
+    freq_tables = []
+    for i in align_list:
+        fp = pipeline(i, motif_path, percentile)[2]
+        short_name = i[48:]
+        fp["Alignment File"] = [short_name] * fp.count()[0]
+        freq_tables.append(fp)
+    
+    frequent_all_alignments = pd.concat(freq_tables).sort_values(by=['Count'], ascending=False)
+    return frequent_all_alignments
 
 ### Wrapping Into One Package
 
-def pipeline(align_path, motif_path, alignment_num, percentile=80):
+def pipeline(alignment_file, motif_path, percentile=80):
     """
-    align_path: a string specifying the path to alignment files you want to use.
+    alignment_file: a string specifying the alignment file you want to use.
     motif_path: a string specifying the path to pwm file you want to use.
-    alignment_num: an integer specifying the specific alignment you want to analyze.
     percentile: cutoff for high frequency of combination
     
     Returns:
@@ -504,36 +517,28 @@ def pipeline(align_path, motif_path, alignment_num, percentile=80):
     2) Table of high-frequency combinations, with high frequency defined as >= ? percentile
     3) Table containing information about the most frequency combination
     """
-    files = glob(align_path)
+    # Filtered Table
+    table = calculate_one_dfs_TFBS(alignment_file, [motif_path])
+    filtered_table = filter_95_percentile(table, "cad_FlyReg.fm").drop(['seq_len', 'position'], axis=1)
+
+    # Position_species_table
+    positions_with_TFBS = list(filtered_table["align_position"])
+    combos = {} # Dictionary with position index : list of species that have TFBS at this position
+    for i in positions_with_TFBS:
+        combos[i] = list(filtered_table[filtered_table["align_position"] == i]["species"])
+    d = {'Alignment Positions': list(combos.keys()),
+         'Species with TFBS at Position': list(combos.values())}
+    positions_species_table = pd.DataFrame(data=d)
+    positions_species_table["Species with TFBS at Position"] = [tuple(i) for i in positions_species_table["Species with TFBS at Position"]]
+
+    # Group_by_combo
+    group_by_combo = positions_species_table.groupby("Species with TFBS at Position",sort=False).count().reset_index()
+    group_by_combo.columns = ["Species with TFBS at Position", "Count"]
     
-    filtered_tables = []
-    for i in files[:10]: # CAN CHANGE NUMBER
-        table = calculate_one_dfs_TFBS(i, [motif_path])
-        f = filter_95_percentile(table, "cad_FlyReg.fm").drop(['seq_len', 'position'], axis=1)
-        filtered_tables.append(f)
+    freq_patterns = frequent_patterns(group_by_combo, percentile)
+    most_freq_pattern = most_frequent_pattern(group_by_combo)
 
-    position_species_tables = []
-    for f in filtered_tables:
-        positions_with_TFBS = list(f["align_position"])
-        combos = {} # Dictionary with position index : list of species that have TFBS at this position
-        for i in positions_with_TFBS:
-            combos[i] = list(f[f["align_position"] == i]["species"])
-        d = {'Alignment Positions': list(combos.keys()),
-             'Species with TFBS at Position': list(combos.values())}
-        positions_species = pd.DataFrame(data=d)
-        positions_species["Species with TFBS at Position"] = [tuple(i) for i in positions_species["Species with TFBS at Position"]]
-        position_species_tables.append(positions_species)
-
-    group_by_combo_tables = []
-    for p in position_species_tables:
-        group_by_combo = p.groupby("Species with TFBS at Position",sort=False).count().reset_index()
-        group_by_combo.columns = ["Species with TFBS at Position", "Count"]
-        group_by_combo_tables.append(group_by_combo)
-    
-    freq_patterns = frequent_patterns(alignment_num, group_by_combo_tables, percentile)
-    most_freq_pattern = most_frequent_pattern(alignment_num, group_by_combo_tables)
-
-    return filtered_tables[alignment_num], group_by_combo_tables[alignment_num], freq_patterns, most_freq_pattern
+    return filtered_table, group_by_combo, freq_patterns, most_freq_pattern
 
 def view_data(results, view = "all"):
     """
