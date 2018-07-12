@@ -25,9 +25,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC, generic_dna, generic_protein
 
-## Examples
-#files = glob('../data/alignments/*0.fa')
-#all_motifs = glob('../data/pwm/*.fm')
 
 def read_records(file):
     """
@@ -202,6 +199,15 @@ def generate_one_seq():
     sequence = "".join(random_list) # 1 long string
     return header + "\n" + sequence
 
+def generate_fasta(path):
+    """
+    path: a string indicating the location in which random file will be created / used
+    """
+    ofile = open(path, "w")
+    for i in range(40):
+        ofile.write(">" + generate_one_seq() + "\n")
+    ofile.close()
+    return glob(path)[0]
 
 def stand_cutoff(motifs, motif_to_use):
     """
@@ -459,14 +465,37 @@ def calculate_all_TFBS(files, all_motifs):
         for motif in all_motifs:
             calculate_one_TFBS(file, motif)
 
+def frequent_patterns(alignment_num, tables, percentile=80):
+    """
+    alignment_num: integer specifying which alignment to analyze
+    tables: a list of tables like group_by_combo_tables
+    percentile: (integer) limit frequencies to only above this percentile
+    
+    Returns:
+    A table, like those in group_by_combo_tables, except w/only the largest counts
+    """
+    counts = list(tables[alignment_num]["Count"])
+    t = tables[alignment_num]
+    return t[t["Count"] >= np.percentile(counts, percentile)]
+
+def most_frequent_pattern(alignment_num, tables):
+    """
+    alignment_num: integer specifying which alignment to analyze
+    tables: a list of tables like group_by_combo_tables
+    
+    Returns:
+    A single-row table with the TFBS combo with the LARGEST count in the sequence
+    """
+    max_count = max(list(tables[alignment_num]["Count"]))
+    t = tables[alignment_num]
+    return t[t["Count"] == max_count]
 
 ### Wrapping Into One Package
 
-def pipeline(align_path, motif_path, motif, alignment_num, percentile=80):
+def pipeline(align_path, motif_path, alignment_num, percentile=80):
     """
     align_path: a string specifying the path to alignment files you want to use.
-    motif_path: a string specifying the path to pwm files you want to use.
-    motif: integer specifying which motif to use (indexes into list of motifs)
+    motif_path: a string specifying the path to pwm file you want to use.
     alignment_num: an integer specifying the specific alignment you want to analyze.
     percentile: cutoff for high frequency of combination
     
@@ -476,11 +505,10 @@ def pipeline(align_path, motif_path, motif, alignment_num, percentile=80):
     3) Table containing information about the most frequency combination
     """
     files = glob(align_path)
-    all_motifs = glob(motif_path)
     
     filtered_tables = []
     for i in files[:10]: # CAN CHANGE NUMBER
-        table = calculate_one_dfs_TFBS(i, [all_motifs[motif]])
+        table = calculate_one_dfs_TFBS(i, [motif_path])
         f = filter_95_percentile(table, "cad_FlyReg.fm").drop(['seq_len', 'position'], axis=1)
         filtered_tables.append(f)
 
@@ -501,36 +529,36 @@ def pipeline(align_path, motif_path, motif, alignment_num, percentile=80):
         group_by_combo = p.groupby("Species with TFBS at Position",sort=False).count().reset_index()
         group_by_combo.columns = ["Species with TFBS at Position", "Count"]
         group_by_combo_tables.append(group_by_combo)
-
-    counts_at_positions_tables = [] # table to return
-    num_alignments = len(group_by_combo_tables)
-    for n in range(num_alignments):
-        counts_at_positions = position_species_tables[n].merge(group_by_combo_tables[n], how="left",sort=False)
-        counts_at_positions.set_index("Alignment Positions", inplace=True)
-        counts_at_positions_tables.append(counts_at_positions)
     
-    counts = list(counts_at_positions_tables[alignment_num]["Count"])
-    g_table = group_by_combo_tables[alignment_num]
-    freq_patterns = g_table[g_table["Count"] >= np.percentile(counts, percentile)] # return
+    freq_patterns = frequent_patterns(alignment_num, group_by_combo_tables, percentile)
+    most_freq_pattern = most_frequent_pattern(alignment_num, group_by_combo_tables)
 
-    max_count = max(list(counts_at_positions_tables[alignment_num]["Count"]))
-    table = group_by_combo_tables[alignment_num]
-    most_freq_pattern = table[table["Count"] == max_count] #return
+    return filtered_tables[alignment_num], group_by_combo_tables[alignment_num], freq_patterns, most_freq_pattern
 
-    return counts_at_positions_tables[alignment_num], freq_patterns, most_freq_pattern
+def view_data(results, view = "all"):
+    """
+    results: the list of tables outputted from the pipline function.
 
-results = pipeline('../data/alignments/*0.fa','../data/pwm/*.fm',1,2)
+    view: a string ("filtered", "grouped", "frequent", or "most frequent") specifying the type of result you want to view.
+        "filtered": a table containing the score, species, raw position, strand, align_position, and motif of each TFBS.
+        "grouped": a table containing the 1) Species with TFBS at Position, and 2) Count of that combination
+        "frequent": a table, like grouped, except that it includes only those with large counts
+        "most frequent": a single row table with the most frequently occurring combination and its count.
+    
+    Provides an easier and clearer way to view specific parts of the output you want to see.
+    """
+    if view == "filtered":
+        return results[0]
+    elif view == "grouped":
+        return results[1]
+    elif view == "frequent":
+        return results[2]
+    elif view == "most frequent":
+        return results[3]
+    else:
+        print("request not recognized")
 
 
-print(results[0].head())
-print(results[1])
-print(results[2])
-
-
-# External functions used in pipeline:
-# * calculate_one_dfs_TFBS
-# * filter_95_percentile
-# 
-# Deleted from original map motif:
+# Deleted from original MSE:
 # * pwm_threshold
 # * calculate_dfs_TFBS
