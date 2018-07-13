@@ -237,7 +237,6 @@ def stand_cutoff(motifs, motif_to_use):
     return (percentile_95, standard_mean)
 
 
-
 ### Data Extraction
 all_motifs = glob('../data/pwm/*.fm')
 cutoff_dict = {}
