@@ -70,6 +70,16 @@ def cast_sequence(ungapped_sequence):
         casted.append(Seq(str(record.seq), IUPAC.IUPACUnambiguousDNA()))
     return casted
 
+def contains_zero(pwm):
+    """
+    Detects the presence of a zero in a given PWM. Returns True or False.
+    """
+
+    for i in list(pwm.values()):
+        if 0 in i:
+            return True
+    return False
+        
 def calculate_pssm(chosen_motif, pseudocounts=0.0):
     """
     chosen_motif: Chosen motif sequence to be used in creating the pwm
@@ -78,6 +88,8 @@ def calculate_pssm(chosen_motif, pseudocounts=0.0):
     Returns the pssm (PositionSpecificScoringMatrix)
     """
     pwm = chosen_motif.counts.normalize(pseudocounts)
+    if contains_zero(pwm):
+        pwm = chosen_motif.counts.normalize(pseudocounts=0.1)
     return pwm.log_odds()
 
 
