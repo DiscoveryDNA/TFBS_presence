@@ -1,5 +1,5 @@
 from threshold_setter import *
-tester = 2
+tester = 123
 
 def calculate_one_dfs_TFBS(file, all_motifs):
     """
@@ -250,10 +250,11 @@ def frequent_across_alignments(align_list, motif_path, percentile):
 
 ### Wrapping Into One Package
 
-def pipeline(alignment_file, motif_path, percentile=80):
+def pipeline(alignment_file, motif_path, stand_cutoff=0, percentile=80):
     """
     alignment_file: a string specifying the alignment file you want to use.
     motif_path: a string specifying the path to pwm file you want to use.
+    stand_cutoff: 
     percentile: cutoff for high frequency of combination
     
     Returns:
@@ -263,7 +264,10 @@ def pipeline(alignment_file, motif_path, percentile=80):
     """
     # Filtered Table
     table = calculate_one_dfs_TFBS(alignment_file, [motif_path])
-    filtered_table = filter_95_percentile(table, motif_path).drop(['seq_len', 'position'], axis=1)
+    filtered_table = filter_95_percentile(table, stand_cutoff).drop(['seq_len', 'position'], axis=1)
+    if (filtered_table.shape[0] == 0):
+        print("No TFBS's detected in this alignment file.")
+        return None
 
     # Position_species_table
     positions_with_TFBS = list(filtered_table["align_position"])
@@ -296,6 +300,8 @@ def view_data(results, view = "all"):
     
     Provides an easier and clearer way to view specific parts of the output you want to see.
     """
+    if results == None:
+        return "No TFBS's detected in this alignment file."
     if view == "filtered":
         return results[0]
     elif view == "grouped":

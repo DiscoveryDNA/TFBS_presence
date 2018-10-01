@@ -127,12 +127,11 @@ def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
     """
     pssm = calculate_pssm(motif)
     distribution = pssm.distribution(background=motif.background, precision= chosen_precision)
-    patser_threshold = distribution.threshold_patser()
     
     position_list = []
     len_and_ids = extract_len_id(raw_sequence, cast_sequences)
     for i in range(len(len_and_ids)):
-        for position, score in pssm.search(cast_sequences[i], threshold= patser_threshold):
+        for position, score in pssm.search(cast_sequences[i], threshold=0):
             pos = {'species': len_and_ids[i].get('species'), 'score':score, 
                          'position':position, 'seq_len': len_and_ids[i].get('seq_len') }
             position_list.append(pos)
@@ -241,20 +240,21 @@ def stand_cutoff(motif_path):
     raw_df = pd.DataFrame(positions(curr_raw, curr_cast, curr_motif))
     temp_df = positive_positions(raw_df)
     percentile_95 = np.percentile(temp_df["score"], 95)
-    standard_mean = temp_df["score"].mean()
-    return (percentile_95, standard_mean)
+    return percentile_95
 
 
 ### Data Extraction
 all_motifs = glob('../data/pwm/*.fm')
 
-def filter_95_percentile(TFBS_df, motif_path):
+def filter_95_percentile(TFBS_df, stand_cutoff):
     """
-    motif_path: (string) path of the 1 motif that you want to use (e.g. '../data/pwm/bcd_FlyReg.fm')
     TFBS_df: A pandas df with the raw/aligned position, score, and file names.
+    stand_cutoff: (integer) the 95% percentile of a randomly generated sequence;
+        used to set the minimum score you want to keep in TFBS_df table.
+        Generate stand_cutoff using the stand_cutoff function provided.
     
     returns the TFBS_df with only values above the 95th percentile.
     """
-    minimum = stand_cutoff(motif_path)[0]
+    minimum = stand_cutoff
     filtered_df = TFBS_df[TFBS_df["score"] >= minimum]
     return filtered_df
