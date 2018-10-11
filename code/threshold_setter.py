@@ -24,6 +24,7 @@ from Bio import motifs
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC, generic_dna, generic_protein
+tester = 80
 
 def read_records(file):
     """
@@ -126,7 +127,6 @@ def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
     Returns a list of positions
     """
     pssm = calculate_pssm(motif)
-    distribution = pssm.distribution(background=motif.background, precision= chosen_precision)
     
     position_list = []
     len_and_ids = extract_len_id(raw_sequence, cast_sequences)
@@ -236,10 +236,14 @@ def stand_cutoff(motif_path):
     curr_raw = raw_sequence_ungap(curr_file)
     curr_cast = cast_sequence(curr_raw)
 
-    len_raw = len(extract_len_id(curr_raw, curr_cast))
-    raw_df = pd.DataFrame(positions(curr_raw, curr_cast, curr_motif))
-    temp_df = positive_positions(raw_df)
-    percentile_95 = np.percentile(temp_df["score"], 95)
+    pssm = calculate_pssm(curr_motif)
+
+    position_list = []
+    for i in (np.random.randint(0, len(curr_raw), size=5)):
+    	for ps in pssm.search(curr_cast[i], threshold=0):
+    		position_list.append(ps[1])
+
+    percentile_95 = np.percentile(position_list, 95)
     return percentile_95
 
 

@@ -1,5 +1,4 @@
 from threshold_setter import *
-tester = 123
 
 def calculate_one_dfs_TFBS(file, all_motifs):
     """
