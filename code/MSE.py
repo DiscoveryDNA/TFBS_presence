@@ -20,7 +20,6 @@ def calculate_one_dfs_TFBS(file, all_motifs):
         temp_df = positive_positions(raw_df)
         temp_df = define_sign(temp_df)
 
-        align_name = re.split(r'_', file)[-1]
         final_df = merge_align_df(temp_df, curr_file, len_raw)
         final_df['motif'] = curr_motif_name
 
@@ -248,6 +247,14 @@ def frequent_across_alignments(align_list, motif_path, percentile):
     return frequent_all_alignments
 
 ### Wrapping Into One Package
+def prelim_pipeline(alignment_file, motif_path, stand_cutoff=0):
+	table = calculate_one_dfs_TFBS(alignment_file, [motif_path])
+	filtered_table = filter_95_percentile(table, stand_cutoff).drop(['seq_len', 'position'], axis=1)
+	if (filtered_table.shape[0] == 0):
+		print("No TFBS's detected in this alignment file.")
+		return None
+	else:
+		return filtered_table
 
 def pipeline(alignment_file, motif_path, stand_cutoff=0, percentile=80):
     """

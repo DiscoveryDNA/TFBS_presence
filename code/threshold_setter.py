@@ -131,7 +131,7 @@ def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
     position_list = []
     len_and_ids = extract_len_id(raw_sequence, cast_sequences)
     for i in range(len(len_and_ids)):
-        for position, score in pssm.search(cast_sequences[i], threshold=0):
+        for position, score in pssm.search(cast_sequences[i], threshold = 0):
             pos = {'species': len_and_ids[i].get('species'), 'score':score, 
                          'position':position, 'seq_len': len_and_ids[i].get('seq_len') }
             position_list.append(pos)
