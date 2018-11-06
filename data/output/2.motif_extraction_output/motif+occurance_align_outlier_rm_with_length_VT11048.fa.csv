@@ -1,0 +1,3 @@
+,Unnamed: 0,score,species,raw_position,strand,align_position,motif,raw motif sequences
+0,0,11.612828254699707,VT11048|0|MEMB005D|-|287,39,negative,60,MA0212.1_bcd.jaspar,CTCAAC
+1,1,11.612828254699707,VT11048|0|MEMB006A|+|286,38,negative,60,MA0212.1_bcd.jaspar,TCAACG
