@@ -16,5 +16,5 @@ Notebooks are used to either test tools or perform analysis.
 
 These are the files that house the functions that are used in the notebooks. They are largely built to make the `pipeline()` function work. 
 
--`threshold_setter.py`: One of the main problems with consistantly mapping TFBS is that in order to say a TFBS is present, there need to be a score threshold set. We formed our own criteria that sets this threshold.
+- `threshold_setter.py`: One of the main problems with consistantly mapping TFBS is that in order to say a TFBS is present, there need to be a score threshold set. We formed our own criteria that sets this threshold.
 - `MSE.py`: These are the functions that aid in the actual mapping of TFBS once the threshold has been set. Contains the main `pipeline()` function that takes in an alignment file, a motif, and a threshold, and outputs tables containing the TFBS's and corresponding information.
