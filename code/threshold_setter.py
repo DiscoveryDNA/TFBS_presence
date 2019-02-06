@@ -133,7 +133,8 @@ def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
     for i in range(len(len_and_ids)):
         for position, score in pssm.search(cast_sequences[i], threshold = -50):
             pos = {'species': len_and_ids[i].get('species'), 'score':score, 
-                         'position':position, 'seq_len': len_and_ids[i].get('seq_len') }
+                     'position': position, 'seq_len': len_and_ids[i].get('seq_len'),
+                     'nucleotide': str(cast_sequences[i][position:position + motif.length])}
             position_list.append(pos)
     return position_list
 
