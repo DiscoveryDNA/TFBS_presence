@@ -16,7 +16,7 @@ def calculate_one_dfs_TFBS(file, all_motifs):
         curr_motif_name = os.path.basename(motif) 
 
         len_raw = len(extract_len_id(curr_raw, curr_cast))
-        raw_df = pd.DataFrame(positions(curr_raw, curr_cast, curr_motif))
+        raw_df = pd.DataFrame(positions(curr_raw, curr_cast, curr_motif, curr_file))
         temp_df = positive_positions(raw_df)
         temp_df = define_sign(temp_df)
 

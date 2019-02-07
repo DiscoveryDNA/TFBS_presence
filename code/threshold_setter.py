@@ -116,8 +116,33 @@ def extract_len_id(raw_seq, raw_seq2):
 # Below are functions used to find the corresponding positions in the sequence and then mark them as
 # negative or positive strands based on if the value was below or above 0 respectively. 
 
+def getNegative(pos_seq):
+    """
+    pos_seq = dna sequence in the positive direction reading from the file
+    
+    Returns the negative counterpart of the positive sequence.
+    """
+    dict = {"A":'T','T':'A','G':'C','C':'G','-':'-'}
+    negative = ""
+    last_index = len(pos_seq) - 1
+    while last_index > -1:
+        negative += dict[pos_seq[last_index].upper()]
+        last_index -= 1
+    return negative
 
-def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
+def sequence(ungapped, position, length):
+    """
+    Given an ungapped sequence and a positive or negative number (position),
+    return the nucleotide at that position plus [length] nucleotides in the
+    positive direction.
+    """
+    if position >= 0:
+        return str(Seq(str(ungapped.seq), IUPAC.IUPACUnambiguousDNA())[position:position+length])
+    else:
+        return getNegative(str(Seq(str(ungapped.seq), IUPAC.IUPACUnambiguousDNA())[position:position+length]))
+
+
+def positions(raw_sequence, cast_sequences, motif, ungapped, chosen_precision=10**4):
     """
     raw_sequence: A list of the sequences that have been ungapped but not casted.
     cast_sequences: A list of sequences that have been ungapped and casted.
@@ -133,8 +158,8 @@ def positions(raw_sequence, cast_sequences, motif, chosen_precision=10**4):
     for i in range(len(len_and_ids)):
         for position, score in pssm.search(cast_sequences[i], threshold = -50):
             pos = {'species': len_and_ids[i].get('species'), 'score':score, 
-                     'position': position, 'seq_len': len_and_ids[i].get('seq_len'),
-                     'nucleotide': str(cast_sequences[i][position:position + motif.length])}
+             'position': position, 'seq_len': len_and_ids[i].get('seq_len'),
+             'nucleotide': sequence(ungapped[i], position, motif.length)}
             position_list.append(pos)
     return position_list
 
