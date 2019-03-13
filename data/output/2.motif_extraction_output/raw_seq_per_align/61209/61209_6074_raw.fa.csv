@@ -1,2 +1,2 @@
-,raw,orig_species,score,align_position,sequence,5_before,5_after
-0,3673,VT61209|1|MEMB005B|+|5498,-0.8922998309135437,6074,GGATTA,TTAATCTGTCC,TAACT
+,raw,orig_species,score,align_position,strand,sequence,5_before,5_after
+0,3673,VT61209|1|MEMB005B|+|5498,-0.8922998309135437,6074,positive,GGATTA,TGTCC,TAACT
