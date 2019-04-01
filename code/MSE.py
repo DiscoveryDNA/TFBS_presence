@@ -247,7 +247,8 @@ def frequent_across_alignments(align_list, motif_path, percentile):
     return frequent_all_alignments
 
 ### Wrapping Into One Package
-def prelim_pipeline(alignment_file, motif_path, stand_cutoff=0):
+def prelim_pipeline(alignment_file, motif_path, stand_cutoff=-50):
+
 	table = calculate_one_dfs_TFBS(alignment_file, [motif_path])
 	filtered_table = filter_95_percentile(table, stand_cutoff).drop(['seq_len', 'position'], axis=1)
 	if (filtered_table.shape[0] == 0):
